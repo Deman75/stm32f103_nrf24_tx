@@ -118,7 +118,7 @@ struct But {
 	uint16_t ButUpTime;
 };
 extern struct But But1; // Машина состояний кнопки энкодера
-uint8_t Menu = 21;			// Переменная для уровней меню
+uint8_t Menu = 11;			// Переменная для уровней меню
 uint8_t OldParam, NewParam; //Старые и новые значения настраиваемых данных
 /* USER CODE END PV */
 
@@ -155,8 +155,11 @@ int main(void)
   /* USER CODE BEGIN 1 */
 	static uint8_t dt; // Переменная для количества попыток отправления.
 	static uint16_t i=1;
-	uint16_t ADC_1, ADC_1_sr, ADC_1_max=0, ADC_1_min=4096;
+	uint16_t ADC_1, ADC_1_sr, ADC_1_sr_trim, ADC_1_max=0, ADC_1_min=4096;
 	uint16_t ADC_2, ADC_2_sr, ADC_2_max=0, ADC_2_min=4096;
+	
+	uint16_t rate = 0; //расходы газа
+	int16_t trim = 0; // Тример руля
 	
 	uint8_t LedFlashNumb = 0;
   /* USER CODE END 1 */
@@ -224,12 +227,13 @@ int main(void)
 	
 	ADC_1_max=3700;	
 	ADC_1_min=205;
-	ADC_1_sr = 50; //50%
+	ADC_1_sr_trim = 2018;
+	ADC_1_sr = 2018; //50% 2018
 	
 	
 	ADC_2_max=2800;	 
-	ADC_2_min=1150;
-	ADC_2_sr = 65; // 44%
+	ADC_2_min=1095;
+	ADC_2_sr = 2220; // 44%
 
   /* USER CODE END 2 */
 
@@ -248,41 +252,51 @@ int main(void)
 		}
 		MenuDelay++;
 		
-		ADC_1 = ADC_Data[1];
-		ADC_1_Percent=100-((100.0/(ADC_1_max-ADC_1_min))*(ADC_1-ADC_1_min));
 		
-		ADC_2 = ((float)ADC_Data[0]);
-		ADC_2_Percent=(100.0/(ADC_2_max-ADC_2_min))*(ADC_2-ADC_2_min);
+//		ADC_2 = ((float)ADC_Data[0]);
+//		ADC_2_Percent=(100.0/(ADC_2_max-ADC_2_min))*(ADC_2-ADC_2_min);
 		
 		Volt = 0.00278 * ADC_Data[2];
 		
 		if (OptionFlag == 0) { // если не находимся в режиме настроек.
-		
-			if (ADC_1_Percent > 100) ADC_1_Percent = 100;
-			if (ADC_1_Percent < 0) ADC_1_Percent = 0;
 			
-			if (ADC_1_Percent < ADC_1_sr - 5){
-					buf1[0] = 100  + ((ADC_1_sr - 5 - ADC_1_Percent)*1.12*2);
+			rate = (uint16_t)(0.025 * ADC_Data[3]);
+			if (rate > 100 ) rate = 100;
+			if (rate < 0 ) rate = 0;
+			rate = 100 - rate;
+			
+			trim = (0.05 * (ADC_Data[4] - 2000)) + (1 - 0.05) * trim;
+
+
+			ADC_1_sr = ADC_1_sr_trim + trim;
+			
+			if (ADC_Data[1] > ADC_1_sr) {
+				if (ADC_Data[1] > ADC_1_max) ADC_Data[1] = ADC_1_max;
+				ADC_1_Percent = ((100.0) / (ADC_1_max - ADC_1_sr)) * (ADC_Data[1] - ADC_1_sr);
+				buf1[0] = 100 + (uint8_t) ADC_1_Percent;
 			}
-			if (ADC_1_Percent > ADC_1_sr + 5){
-					buf1[0] = 100 - 0 + ((ADC_1_sr + 5 - ADC_1_Percent)*1.12*2);
+			
+			if (ADC_Data[1] < ADC_1_sr) {
+				if (ADC_Data[1] < ADC_1_min) ADC_Data[1] = ADC_1_min;
+				ADC_1_Percent = ((100.0) / (ADC_1_sr - ADC_1_min)) * (ADC_Data[1] - ADC_1_sr);
+				buf1[0] = 100 - (uint8_t) ADC_1_Percent;
 			}
-			if (ADC_1_Percent >ADC_1_sr - 5 && ADC_1_Percent<ADC_1_sr + 5){
-				buf1[0] = 100;
+			
+			
+			
+			if (ADC_Data[0] > ADC_2_sr) {
+				ADC_2_Percent = ((100.0 - rate) / (ADC_2_max - ADC_2_sr)) * (ADC_Data[0] - ADC_2_sr);
+				if (ADC_2_Percent > 100) ADC_2_Percent = 100;
+				buf1[1] = 100 - (uint8_t) ADC_2_Percent;
+			}
+				
+			if (ADC_Data[0] < ADC_2_sr) {
+				ADC_2_Percent = ((100.0 - rate) / (ADC_2_sr - ADC_2_min)) * (ADC_Data[0] - ADC_2_sr);
+				if (ADC_2_Percent > 100) ADC_2_Percent = 100;
+				buf1[1] = 100 + (uint8_t) ADC_2_Percent;
 			}
 			
-			if (ADC_2_Percent > 100) ADC_2_Percent = 100;
-			
-			if (ADC_2_Percent < 0) ADC_2_Percent = 0;
-			
-			if (ADC_2_Percent < ADC_2_sr - 5){
-					buf1[1] = 100 + ((ADC_2_sr - 5 - ADC_2_Percent)*0.835*2);
-				}
-			if (ADC_2_Percent > ADC_2_sr + 5){
-					buf1[1] = 100 + ((ADC_2_sr + 5 - ADC_2_Percent)*1.68*2);
-					if (buf1[1] <= 0) buf1[1] = 0;
-				}		
-			if (ADC_2_Percent >ADC_2_sr - 5 && ADC_2_Percent<ADC_2_sr + 5){
+			if ((ADC_Data[0] > ADC_2_sr - 50) && (ADC_Data[0] < ADC_2_sr + 50)) {
 				buf1[1] = 100;
 			}
 			
@@ -754,9 +768,9 @@ void MainMenu (void){
 	if (Menu>10 && Menu<20) {
 	
 		LCD_RectFill(1,1,32,128,0x00);
-
 		LCD_BarHorizont(1,1,5,50,buf1[0]/2,0x01,0x00);
 		sprintf(str,"Ch1 = %d", buf1[0]);
+//		sprintf(str,"Ch1 = %d", ADC_Data[1]);
 		StringCalibriLight14(6,1,str,0x01,0x02);
 		
 		LCD_BarHorizont(1,60,5,50,buf1[1]/2,0x01,0x00);
