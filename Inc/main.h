@@ -84,6 +84,10 @@ void Error_Handler(void);
 #define LED_RED_GPIO_Port GPIOC
 #define LED_GREEN_Pin GPIO_PIN_15
 #define LED_GREEN_GPIO_Port GPIOC
+#define ThrottleRate_Pin GPIO_PIN_0
+#define ThrottleRate_GPIO_Port GPIOA
+#define TurnTrim_Pin GPIO_PIN_1
+#define TurnTrim_GPIO_Port GPIOA
 #define VOLT_TX_Pin GPIO_PIN_2
 #define VOLT_TX_GPIO_Port GPIOA
 #define THROOTLE_Pin GPIO_PIN_3

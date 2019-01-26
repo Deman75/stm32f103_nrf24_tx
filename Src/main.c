@@ -53,10 +53,10 @@
 #define LEFT  HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6)==GPIO_PIN_SET
 #define RIGHT HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5)==GPIO_PIN_SET
 
-#define LED_MAIN_ON				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14, GPIO_PIN_SET)
+#define LED_MAIN_ON			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14, GPIO_PIN_SET)
 #define LED_MAIN_OFF			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14, GPIO_PIN_RESET)
 
-#define LED_YELLOW_ON			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET)
+#define LED_YELLOW_ON		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET)
 #define LED_YELLOW_OFF  	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET)
 #define LED_YELLOW_TOG   	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13)
 
@@ -268,37 +268,44 @@ int main(void)
 			trim = (0.05 * (ADC_Data[4] - 2000)) + (1 - 0.05) * trim;
 
 
-			ADC_1_sr = ADC_1_sr_trim + trim;
+         ADC_1_sr = ADC_1_sr_trim + trim;
+			ADC_1 = ADC_Data[1];
 			
-			if (ADC_Data[1] > ADC_1_sr) {
-				if (ADC_Data[1] > ADC_1_max) ADC_Data[1] = ADC_1_max;
-				ADC_1_Percent = ((100.0) / (ADC_1_max - ADC_1_sr)) * (ADC_Data[1] - ADC_1_sr);
+			if (ADC_1 > ADC_1_sr) {
+				if (ADC_1 > ADC_1_max) ADC_1 = ADC_1_max;
+				ADC_1_Percent = ((100.0) / (ADC_1_max - ADC_1_sr)) * (ADC_1 - ADC_1_sr);
 				buf1[0] = 100 + (uint8_t) ADC_1_Percent;
 			}
 			
-			if (ADC_Data[1] < ADC_1_sr) {
-				if (ADC_Data[1] < ADC_1_min) ADC_Data[1] = ADC_1_min;
-				ADC_1_Percent = ((100.0) / (ADC_1_sr - ADC_1_min)) * (ADC_Data[1] - ADC_1_sr);
+			if (ADC_1 < ADC_1_sr) {
+				if (ADC_1 < ADC_1_min) ADC_1 = ADC_1_min;
+				ADC_1_Percent = ((100.0) / (ADC_1_sr - ADC_1_min)) * (ADC_1 - ADC_1_sr);
 				buf1[0] = 100 - (uint8_t) ADC_1_Percent;
 			}
 			
 			
+			ADC_2 = ADC_Data[0];
 			
-			if (ADC_Data[0] > ADC_2_sr) {
-				ADC_2_Percent = ((100.0 - rate) / (ADC_2_max - ADC_2_sr)) * (ADC_Data[0] - ADC_2_sr);
+			if (ADC_2 > ADC_2_sr) {
+				ADC_2_Percent = ((100.0 - rate) / (ADC_2_max - ADC_2_sr)) * (ADC_2 - ADC_2_sr);
 				if (ADC_2_Percent > 100) ADC_2_Percent = 100;
 				buf1[1] = 100 - (uint8_t) ADC_2_Percent;
-			}
+			} else
 				
-			if (ADC_Data[0] < ADC_2_sr) {
-				ADC_2_Percent = ((100.0 - rate) / (ADC_2_sr - ADC_2_min)) * (ADC_Data[0] - ADC_2_sr);
+			if (ADC_2 < ADC_2_sr) {
+				ADC_2_Percent = ((100.0 - rate) / (ADC_2_sr - ADC_2_min)) * (ADC_2 - ADC_2_sr);
 				if (ADC_2_Percent > 100) ADC_2_Percent = 100;
 				buf1[1] = 100 + (uint8_t) ADC_2_Percent;
 			}
 			
-			if ((ADC_Data[0] > ADC_2_sr - 50) && (ADC_Data[0] < ADC_2_sr + 50)) {
+			if ((ADC_2 > ADC_2_sr - 50) && (ADC_2 < ADC_2_sr + 50)) {
 				buf1[1] = 100;
 			}
+			
+			LED_YELLOW_OFF;
+			
+//			buf1[0] = 100;
+//			buf1[1] = 100;
 			
 			if (REED_BTN_1) {
 				buf1[2] = SetResBits(1,buf1[2],1);
@@ -310,8 +317,8 @@ int main(void)
 			} else {
 				buf1[2] = SetResBits(0,buf1[2],2);
 			}
+			HAL_Delay(20);
 			dt = NRF24L01_Send(buf1);
-			LED_YELLOW_OFF;
 		}
 		else {
 			HAL_Delay(10);
@@ -714,17 +721,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(NRF_EXT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ENCODER_BTN_Pin BTN_1_Pin */
-  GPIO_InitStruct.Pin = ENCODER_BTN_Pin|BTN_1_Pin;
+  /*Configure GPIO pins : ENCODER_BTN_Pin BTN_1_Pin BTN_2_Pin */
+  GPIO_InitStruct.Pin = ENCODER_BTN_Pin|BTN_1_Pin|BTN_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : BTN_2_Pin */
-  GPIO_InitStruct.Pin = BTN_2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BTN_2_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);

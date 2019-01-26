@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=C:/Users/Dmitriy/Desktop/MicroProject/stm32f103_nrf24_tx/Inc
+HeaderPath=G:/MicroProject/F103_nRF24_TX/Inc
 HeaderFiles=stm32f1xx_it.h;stm32f1xx_hal_conf.h;main.h;
-SourcePath=C:/Users/Dmitriy/Desktop/MicroProject/stm32f103_nrf24_tx/Src
+SourcePath=G:/MicroProject/F103_nRF24_TX/Src
 SourceFiles=stm32f1xx_it.c;stm32f1xx_hal_msp.c;main.c;
 
 [PreviousLibFiles]

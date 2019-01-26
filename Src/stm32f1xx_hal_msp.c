@@ -128,7 +128,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     PA3     ------> ADC1_IN3
     PA4     ------> ADC1_IN4 
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|VOLT_TX_Pin|THROOTLE_Pin 
+    GPIO_InitStruct.Pin = ThrottleRate_Pin|TurnTrim_Pin|VOLT_TX_Pin|THROOTLE_Pin 
                           |TURN_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -182,7 +182,7 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     PA3     ------> ADC1_IN3
     PA4     ------> ADC1_IN4 
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0|GPIO_PIN_1|VOLT_TX_Pin|THROOTLE_Pin 
+    HAL_GPIO_DeInit(GPIOA, ThrottleRate_Pin|TurnTrim_Pin|VOLT_TX_Pin|THROOTLE_Pin 
                           |TURN_Pin);
 
     /* ADC1 DMA DeInit */
